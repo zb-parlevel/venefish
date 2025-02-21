@@ -17,7 +17,6 @@ import { FC, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth, useFirestore } from "reactfire";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
@@ -25,7 +24,6 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(100),
-  subscriptionTier: z.enum(["core", "premium", "enterprise"])
 });
 
 interface SignUpFormProps {
@@ -44,11 +42,10 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
     defaultValues: {
       email: "",
       password: "",
-      subscriptionTier: "core"
     },
   });
 
-  const signup = async ({ email, password, subscriptionTier }: z.infer<typeof formSchema>) => {
+  const signup = async ({ email, password }: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -56,7 +53,7 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
         // Create user document in Firestore
         await setDoc(doc(firestore, "users", userCredential.user.uid), {
           email: userCredential.user.email,
-          subscriptionTier,
+          subscriptionTier: "core",
           createdAt: serverTimestamp()
         });
         
@@ -110,31 +107,6 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
                   </FormControl>
                   <FormDescription>
                     Must be at least 8 characters long.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="subscriptionTier"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Subscription Tier</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a subscription tier" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="core">Core</SelectItem>
-                      <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Choose your subscription tier. You can upgrade later.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
