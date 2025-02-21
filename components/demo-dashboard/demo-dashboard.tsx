@@ -2,6 +2,7 @@ import { FC } from "react";
 import Image from "next/image";
 import { MainNav } from "@/components/demo-dashboard/main-nav";
 import { RecentSales } from "@/components/demo-dashboard/recent-sales";
+import { SubscriptionStatus } from "@/components/subscription-status";
 import {
   Card,
   CardHeader,
@@ -40,6 +41,7 @@ export const DemoDashboard: FC = () => {
         </div>
         <div className="flex-1 space-y-4 pt-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <SubscriptionStatus />
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">

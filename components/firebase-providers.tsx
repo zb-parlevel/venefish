@@ -15,13 +15,13 @@ import { getAnalytics } from "firebase/analytics";
 import { FirebaseOptions } from "firebase/app";
 
 const config: FirebaseOptions = {
-  apiKey: "AIzaSyDnVqs8TBiIicdOcqb5WWqCUDB_GMywzs4",
-  authDomain: "venefish-4b609.firebaseapp.com",
-  projectId: "venefish-4b609",
-  storageBucket: "venefish-4b609.appspot.com",
-  messagingSenderId: "976336889830",
-  appId: "1:976336889830:web:030a5e0b9e6053da961827",
-  measurementId: "G-GFMBQQW6PC",
+  apiKey: "AIzaSyAGYdobvDYA6_1mPUega9-pq-SpfBtOgSQ",
+  authDomain: "keifer-f5c76.firebaseapp.com",
+  projectId: "keifer-f5c76",
+  storageBucket: "keifer-f5c76.appspot.com",
+  messagingSenderId: "883711420008",
+  appId: "1:883711420008:web:5984c3984db2fab14f3ddd",
+  measurementId: "",
 };
 
 const FirebaseProviderSDKs: FC<{ children: ReactNode }> = ({ children }) => {

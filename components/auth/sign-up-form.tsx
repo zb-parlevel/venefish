@@ -17,12 +17,15 @@ import { FC, useState } from "react";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { useAuth } from "reactfire";
+import { useAuth, useFirestore } from "reactfire";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(100),
+  subscriptionTier: z.enum(["core", "premium", "enterprise"])
 });
 
 interface SignUpFormProps {
@@ -33,30 +36,42 @@ interface SignUpFormProps {
 export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
   const [isLoading, setIsLoading] = useState(false);
 
+  const auth = useAuth();
+  const firestore = useFirestore();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       password: "",
+      subscriptionTier: "core"
     },
   });
 
-  const auth = useAuth();
-
-  const signup = async ({ email, password }: z.infer<typeof formSchema>) => {
+  const signup = async ({ email, password, subscriptionTier }: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
-      const user = await createUserWithEmailAndPassword(auth, email, password);
-      if (user?.user.uid && user.user.email) {
-        // create user in firestore here if you want
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      if (userCredential?.user) {
+        // Create user document in Firestore
+        await setDoc(doc(firestore, "users", userCredential.user.uid), {
+          email: userCredential.user.email,
+          subscriptionTier,
+          createdAt: serverTimestamp()
+        });
+        
         toast({ title: "Account created!" });
         onSignUp?.();
       }
     } catch (err: any) {
-      if ("code" in err && err.code.includes("already")) {
+      console.error("Signup error:", err);
+      if (err.code === "auth/email-already-in-use") {
         toast({ title: "User already exists" });
       } else {
-        toast({ title: "Error signing up", description: `${err}` });
+        toast({ 
+          title: "Error signing up", 
+          description: err.message || "An unexpected error occurred"
+        });
       }
     } finally {
       setIsLoading(false);
@@ -95,6 +110,31 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
                   </FormControl>
                   <FormDescription>
                     Must be at least 8 characters long.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subscriptionTier"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Subscription Tier</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a subscription tier" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="core">Core</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Choose your subscription tier. You can upgrade later.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
