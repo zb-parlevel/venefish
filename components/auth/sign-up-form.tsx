@@ -20,10 +20,19 @@ import { Input } from "@/components/ui/input";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useAuth, useFirestore } from "reactfire";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { ROLES, UserRole, DEFAULT_ROLE } from "@/lib/roles";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const formSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8).max(100),
+  role: z.enum(['admin', 'manager', 'staff']).default('staff'),
 });
 
 interface SignUpFormProps {
@@ -42,10 +51,11 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
     defaultValues: {
       email: "",
       password: "",
+      role: DEFAULT_ROLE,
     },
   });
 
-  const signup = async ({ email, password }: z.infer<typeof formSchema>) => {
+  const signup = async ({ email, password, role }: z.infer<typeof formSchema>) => {
     try {
       setIsLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -53,6 +63,7 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
         // Create user document in Firestore
         await setDoc(doc(firestore, "users", userCredential.user.uid), {
           email: userCredential.user.email,
+          role: role,
           subscriptionTier: "core",
           createdAt: serverTimestamp()
         });
@@ -78,20 +89,17 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(signup)}>
-          <fieldset disabled={isLoading} className="space-y-4">
+        <form onSubmit={form.handleSubmit(signup)} className="space-y-4">
+          <fieldset disabled={isLoading}>
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email Address</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input placeholder="name@example.com" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    A valid email is required to watch locked specials.
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -105,8 +113,30 @@ export const SignUpForm: FC<SignUpFormProps> = ({ onShowLogin, onSignUp }) => {
                   <FormControl>
                     <Input type="password" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Role</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value={ROLES.STAFF}>Staff</SelectItem>
+                      <SelectItem value={ROLES.MANAGER}>Manager</SelectItem>
+                      <SelectItem value={ROLES.ADMIN}>Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormDescription>
-                    Must be at least 8 characters long.
+                    Choose your role in the organization
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
