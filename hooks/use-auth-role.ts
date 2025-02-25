@@ -18,6 +18,9 @@ export function useAuthRole() {
           if (userDocSnap.exists()) {
             const userData = userDocSnap.data();
             setRole(userData.role || DEFAULT_ROLE);
+            
+            // Force token refresh to get updated custom claims
+            await user.getIdToken(true);
           }
         } catch (error) {
           console.error('Error fetching user role:', error);
